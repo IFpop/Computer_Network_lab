@@ -1,8 +1,8 @@
-package chapter3.lab4;
+package network.chapter3.lab4;
 
 import java.util.*;
 
-import chapter3.lab4.FrameInterface.FrameKind;
+import network.chapter3.lab4.FrameInterface.FrameKind;
 
 public class GoBackN implements Protocol
 {	
@@ -44,7 +44,6 @@ public class GoBackN implements Protocol
 	
 	public void runProtocol()
 	{
-		int receivedCnt = 0;
 		int nextFrameToSend = 0;
 		int ackExpected = 0;
 		int frameExpected = 0;
@@ -69,7 +68,7 @@ public class GoBackN implements Protocol
 				}
 			}
 			
-			System.out.println(_hostName + " receive a event: ");
+			System.out.print(_hostName + " receive a event: ");
 			
 			switch (crtEvent)
 			{
@@ -87,10 +86,11 @@ public class GoBackN implements Protocol
 				}
 				else
 				{
+					printReceiveMsg(receivedFrame, frameExpected);
 					if (receivedFrame.getSequenceNumber() == frameExpected)
 					{
-						receivedCnt++;
-						System.out.println(_hostName + " recevied frame " + receivedCnt);
+						//receivedCnt++;
+						//System.out.println("Total received frame cnt: " + receivedCnt);
 						frameExpected = (frameExpected + 1) % MAX_SEQUENCE_COUNT;
 					}
 					while (between(ackExpected, receivedFrame.getAckNumber(), nextFrameToSend))
@@ -105,10 +105,11 @@ public class GoBackN implements Protocol
 				System.out.println("Check sum Error");
 				break;
 			case TIMEOUT:
-				System.out.println("Time is outr");
+				System.out.println("Time is out, retransmit frames");
 				nextFrameToSend = ackExpected;
 				for (int i = 0; i < bufferSize; i++, nextFrameToSend = (nextFrameToSend + 1) % MAX_SEQUENCE_COUNT)
 				{
+					printSendMsg(ackExpected, nextFrameToSend, frameExpected);
 					sendData(nextFrameToSend, frameExpected);
 				}
 				break;
@@ -119,10 +120,9 @@ public class GoBackN implements Protocol
 				{
 					_sendOver = true;
 					sendTerminatingFrame();
-					
-					if(_receiveOver)
+					if (_receiveOver)
 					{
-						 end = true;
+						end = true;
 					}
 				}
 				else
@@ -142,6 +142,7 @@ public class GoBackN implements Protocol
 					}
 					
 					bufferSize++;
+					printSendMsg(ackExpected, nextFrameToSend, frameExpected);
 					sendData(nextFrameToSend, frameExpected);
 					nextFrameToSend = (nextFrameToSend + 1) % MAX_SEQUENCE_COUNT;
 				}
@@ -152,7 +153,7 @@ public class GoBackN implements Protocol
 				break;
 			}
 			
-			if (bufferSize < MAX_SEQUENCE_COUNT)
+			if (bufferSize < MAX_SEQUENCE_COUNT - 1)
 			{
 				enableNetworkLayer();
 			}
@@ -161,6 +162,24 @@ public class GoBackN implements Protocol
 				disableNetworkLayer();
 			}
 		}
+	}
+	
+	private void printSendMsg(int ackExpected, int nextFrameToSend, int frameExpected)
+	{
+		System.out.printf("%s send frame. ack_expected: %d, next_frame_to_send: %d, frame_expected: %d\n", 
+				_hostName, 
+				ackExpected, 
+				nextFrameToSend,
+				frameExpected);
+	}
+	
+	private void printReceiveMsg(FrameInterface frame, int frameExpected)
+	{
+		System.out.printf("%s receive frame. sequence number: %d, ack number: %d, frame_expected: %d\n", 
+				_hostName, 
+				frame.getSequenceNumber(), 
+				frame.getAckNumber(),
+				frameExpected);
 	}
 	
 	private EventType waitForEvent()

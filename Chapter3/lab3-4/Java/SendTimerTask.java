@@ -1,4 +1,4 @@
-package chapter3.lab4;
+package network.chapter3.lab4;
 
 import java.util.TimerTask;
 

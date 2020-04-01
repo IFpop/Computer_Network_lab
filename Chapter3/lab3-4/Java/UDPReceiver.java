@@ -1,4 +1,4 @@
-package chapter3.lab4;
+package network.chapter3.lab4;
 
 import java.io.IOException;
 import java.net.*;
@@ -25,6 +25,14 @@ public class UDPReceiver extends Thread
     			e.printStackTrace();
     		}
 	        _user.receiveDataFromPhysicalLayer(packet.getData());
+	        try
+			{
+	        	Thread.sleep(200);
+			}
+	        catch (InterruptedException e)
+	        {
+	        	e.printStackTrace();
+	        }
 		}
 	}
 	
