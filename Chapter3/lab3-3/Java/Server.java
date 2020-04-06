@@ -8,7 +8,7 @@ import network.chapter3.lab1.CRC_CCITT;
 
 public class Server extends Thread{
 	// 设置哪些变量？传输接口，数据，数据发送帧的编号，
-	private int NextFrameToSend = 0;
+	private int NextFrameToSend = 1;
 	private String IpAddress = "";
 	private int UDPPort=8888;
 	private Frame InfoFrame;
@@ -20,14 +20,15 @@ public class Server extends Thread{
 	private boolean EndOfFile = false;
 	private boolean KeepId = false;
 	private int len;
-	private int AckId=0;
+	private int AckId=1;
+	private boolean Fail=false;
 	// 读取和写入相关
 	// ObjectInputStream in;
 	BufferedReader in;
 	ObjectOutputStream out;
 	DataOutputStream dos;
 	public Server(int UDPPort, int FilterError, int FilterLost, String FilePath) {
-		this.NextFrameToSend = 0;
+		this.NextFrameToSend = 1;
 		this.IpAddress = "127.0.0.1";
 		this.UDPPort = UDPPort;
 		this.FilterError = FilterError;
@@ -65,7 +66,7 @@ public class Server extends Thread{
 					KeepId = false;
 					InfoFrame = new Frame(NextFrameToSend, FilterError, FilterLost);
 					InfoFrame.SetMsg(Buffer, len);
-					InfoFrame.SetState("OK");
+					InfoFrame.SetState("Normal");
 				}
 					
 				
@@ -86,7 +87,7 @@ public class Server extends Thread{
 				// 在中间插入t以切开信息和CRC
 				String HexCRC=new BigInteger(CRCValue,2).toString(16);
 //				System.out.println("Server:CRC转换后为"+HexCRC+"CRC转换前为"+CRCValue);
-				String SendInfo=HexString+"t"+HexCRC+"\n";
+				
 				String State = InfoFrame.GetState();
 //				//testCRC
 //				{
@@ -103,9 +104,19 @@ public class Server extends Thread{
 				Client.setSoTimeout(15000);
 				dos = new DataOutputStream(Client.getOutputStream());
 //				System.out.println("       Server:状态为"+InfoFrame.GetState());
-				if (!(State.equals("Lost"))) {
+				if (!(State.equals("Lost"))&&!(State.equals("Error"))) {
 					// 将生成的带CRC的字符串输出
-					
+					String SendInfo=HexString+"t"+HexCRC+"\n";
+					dos.writeBytes(SendInfo);
+//					System.out.println("Server:"+SendInfo);
+//					dos.close();
+					System.out.println("Server:正在发送帧编号为" + InfoFrame.GetId());
+					System.out.println("Server:next_frame_to_send为" + NextFrameToSend+"\n");
+				}
+				else if(State.equals("Error"))
+				{
+					Fail=true;
+					String SendInfo=HexString+"at"+HexCRC+"\n";
 					dos.writeBytes(SendInfo);
 //					System.out.println("Server:"+SendInfo);
 //					dos.close();
@@ -113,6 +124,7 @@ public class Server extends Thread{
 					System.out.println("Server:next_frame_to_send为" + NextFrameToSend+"\n");
 				}
 				else {
+					Fail=true;
 					try {
 						this.sleep(13000);
 					} catch (InterruptedException e) {

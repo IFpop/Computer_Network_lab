@@ -9,16 +9,18 @@ public class Frame implements Serializable{
     public static int NumOfData=0;
     public int Length;
     private byte[] Msg;
+//    public boolean Fail=false;
+//    private
 //    private int FilterError=0;
 //    private int FilterLost=0; 
     // private String CrcCode="";
     public Frame(int idOfFrame,int filterError,int filterLost)
     {
         this.IdOfFrame = idOfFrame;
-        NumOfData++;
+//        NumOfData++;
         //模拟设置状态，每10帧中一帧出错，每10帧中一帧丢失
-        if(NumOfData%10==5) this.State="Lost";
-        else if(NumOfData%10==7) this.State="Error";
+        if(idOfFrame%10==5) this.State="Lost";
+        else if(idOfFrame%10==7) this.State="Error";
         else this.State="Normal";
     }
     // public void SetCrc(String crc)

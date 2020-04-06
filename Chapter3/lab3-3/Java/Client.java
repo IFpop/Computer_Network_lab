@@ -18,7 +18,7 @@ public class Client extends Thread {
     private byte[] FileInfo=new byte[0];
     private Frame InfoFrame;
     private boolean EndOfFile = false;
-    private int AckId=0;
+    private int AckId=1;
     private String FileName = "test.txt";
     Socket UsedSocket;
     // ObjectInputStream in;
@@ -35,7 +35,7 @@ public class Client extends Thread {
             System.out.println("Client: Socket启动出错!");
             System.out.println("IOException :" + e.toString());
         }
-        ExpectedFrameId = 0;
+        ExpectedFrameId = 1;
         EndOfFile = false;
     }
 
@@ -118,6 +118,7 @@ public class Client extends Thread {
                         dos1.writeBytes("OK" + '\n');
                         dos1.close();
                         System.out.println("Client:发送确认帧成功！"+" 确认帧序号为:"+AckId+"\n");
+                        AckId++;
                     }
                     // 数据错误
                     else {
@@ -126,6 +127,7 @@ public class Client extends Thread {
                         dos1.close();
                         System.out.println("Clinet:数据出错！");
                         System.out.println("Client:发送确认帧成功！"+" 确认帧序号为:"+AckId+"\n");
+                        AckId++;
                     }
                 }
                 in.close();
@@ -141,6 +143,7 @@ public class Client extends Thread {
                     dos.writeBytes("LOST" + '\n');
                     dos.close();
                     System.out.println("Client:发送确认帧成功！"+" 确认帧序号为:"+AckId+"\n");
+                    AckId++;
                 } catch (java.io.IOException ee) {
                     ee.printStackTrace();
                 }
@@ -149,7 +152,7 @@ public class Client extends Thread {
             }
 
         }
-        System.out.println("Client:文件接受完毕！\n");
+//        System.out.println("Client:文件接受完毕！\n");
         // 将byte数组存储在文件中
         File RecFile = new File(SavePath + FileName);
         try {
