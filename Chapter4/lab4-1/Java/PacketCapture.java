@@ -25,7 +25,7 @@ public class PacketCapture implements PacketReceiver{
 			len++;
 			if(len<bt.length)
 			{
-				mac+=Integer.toHexString(b&0xff)+":";
+				mac+=Integer.toHexString(b&0xff)+"-";
 			}
 			else {
 				mac+=Integer.toHexString(b&0xff);
@@ -39,27 +39,33 @@ public class PacketCapture implements PacketReceiver{
 		NetworkInterface[] devices = JpcapCaptor.getDeviceList();
 		if(devices.length==0)
 		{
-			System.out.println("未检测到网络适配器信息！");
+			System.out.println("No device found！");
 			return;
 		}
-		System.out.println("检测到的网卡如下！");
+		System.out.println("Following are the devices found：");
 		int num=0;
 		for (NetworkInterface n : devices) {
-			System.out.println("------------ 设备ID:"+num+"------------------");
-			System.out.println("设备名称"+n.name);
-			System.out.println("设备描述"+n.description);
+			System.out.println("------------ Device ID:"+num+"------------------");
+			System.out.println("Device Name:"+n.name);
+			System.out.println("Device Description:"+n.description);
 			int len=0;
 			String mac=GetMac(n.mac_address);
-			System.out.println("MAC地址为："+mac);
+			System.out.println("Device MAC Address："+mac);
 			num++;
 		}
 		System.out.println("-------------------------------------------");
 		while(true)
 		{
 			Scanner scanner=new Scanner(System.in);
-			System.out.print("请输入要捕获的网卡设备编号(若要退出请输入-1):");
+			System.out.print("Please input the ID of device to capture(input -1 to exit):");
 			int Id=scanner.nextInt();
 			if(Id==-1) break;
+			int NumOfDev=devices.length;
+			if(Id>=NumOfDev||Id<0)
+			{
+				System.out.println("No such device found!Please input again.");
+				continue;
+			}
 			//Listen to the device
 //			
 			/**
@@ -70,7 +76,7 @@ public class PacketCapture implements PacketReceiver{
 			 */
 			try {
 				JpcapCaptor jpcap=JpcapCaptor.openDevice(devices[Id], 65536, true, 50);
-				jpcap.loopPacket(20, new PacketCapture());//是receivePacket的回调函数
+				jpcap.loopPacket(100000, new PacketCapture());//是receivePacket的回调函数
 			}catch (IOException e) {
 				// TODO: handle exception
 				e.printStackTrace();
@@ -84,40 +90,40 @@ public class PacketCapture implements PacketReceiver{
 //		System.out.println(packet);
 //		下面进行分类讨论
 		System.out.println("----------------------------------------------");
-		System.out.println("实际捕获的包长度: " + packet.caplen);
-		System.out.println("真正的包长度: " + packet.len);
+		System.out.println("Actual Capture Length: " + packet.caplen);
+		System.out.println("Real Packet Length: " + packet.len);
 		System.out.println("");
 		//数据链路层
 		DatalinkPacket DataLink=packet.datalink;
 		if(DataLink instanceof EthernetPacket)
 		{
-			System.out.println("MAC子层结构及各字段的值:");
+			System.out.println("MAC address and other values:");
 			EthernetPacket Ep=(EthernetPacket)DataLink;
 			//获取mac地址
-			System.out.println("源MAC地址为"+GetMac(Ep.src_mac));
-			System.out.println("目的MAC地址为"+GetMac(Ep.dst_mac));
-			System.out.println("以太类型为"+Integer.toHexString(Ep.frametype & 0xffff));
+			System.out.println("src MAC address:"+GetMac(Ep.src_mac));
+			System.out.println("des MAC address"+GetMac(Ep.dst_mac));
+			System.out.println("Ether type："+Integer.toHexString(Ep.frametype & 0xffff));
 			System.out.println("");
 		}
 		else 
 		{
-			System.out.println("此帧为其他类型的数据链路帧");
-			System.out.println("帧内容为"+packet);
+			System.out.println("Other Data Frame");
+			System.out.println("Content of the frame:"+packet);
 			System.out.println("");
 		}
 		if(packet instanceof ARPPacket)
 		{
-			System.out.println("网络层报文类型:ARP");
+			System.out.println("Network layer message type:ARP");
 			ARPPacket ap = (ARPPacket) packet;
-			System.out.println("硬件类型: " + ap.hardtype);
-			System.out.println("协议类型: " + ap.prototype);
-			System.out.println("硬件地址长度: " + ap.hlen);
-			System.out.println("协议地址长度: " + ap.plen);
-			System.out.println("操作码: " + ap.operation);
-			System.out.println("发送者MAC地址: " + ap.getSenderHardwareAddress());
-			System.out.println("发送者IP地址: " + ap.getSenderProtocolAddress());
-			System.out.println("目标MAC地址: " + ap.getTargetHardwareAddress());
-			System.out.println("目标IP地址: " + ap.getTargetProtocolAddress());
+			System.out.println("Hardware type: " + ap.hardtype);
+			System.out.println("Protocol type: " + ap.prototype);
+			System.out.println("Hardware address length: " + ap.hlen);
+			System.out.println("Protocol address length: " + ap.plen);
+			System.out.println("Opcode: " + ap.operation);
+			System.out.println("src MAC address: " + ap.getSenderHardwareAddress());
+			System.out.println("des MAC address: " + ap.getTargetHardwareAddress());
+			System.out.println("src IP address: " + ap.getSenderProtocolAddress());
+			System.out.println("des IP address: " + ap.getTargetProtocolAddress());
 			System.out.println("");
 			
 		}
@@ -125,70 +131,77 @@ public class PacketCapture implements PacketReceiver{
 		{
 			
 			IPPacket ip=(IPPacket)packet;
-			System.out.println("网络层报文类型:IP");
+			System.out.println("Network layer message type:IP");
 			if(ip.version==4)//ipv4版本号为4
 			{
-				System.out.println("服务类型: " + ip.rsv_tos);
-				System.out.println("优先级: " + ip.priority);
-				System.out.println("包长度: " + ip.length);
-				System.out.println("标志: " + ip.ident);
-				System.out.println("偏移量: " + ip.offset);
+				System.out.println("Type of service: " + ip.rsv_tos);
+				System.out.println("Priority: " + ip.priority);
+				System.out.println("Length: " + ip.length);
+				System.out.println("Identification: " + ip.ident);
+				System.out.println("Offset: " + ip.offset);
 				System.out.println("TTL: " + ip.hop_limit);
-				System.out.println("协议: " + ip.protocol);
-				System.out.println("源IP地址: " + ip.src_ip.getHostAddress());
-				System.out.println("目的IP地址: " + ip.dst_ip.getHostAddress());
+				System.out.println("Protocol: " + ip.protocol);
+				System.out.println("src IP address: " + ip.src_ip.getHostAddress());
+				System.out.println("des IP address: " + ip.dst_ip.getHostAddress());
 				System.out.println("");
 			}
 			if(ip instanceof UDPPacket)
 			{
-				System.out.println("运输层报文类型:UDP");
+				System.out.println("Transport layer message type:UDP");
 				UDPPacket up = (UDPPacket) ip;
-				System.out.println("源端口: " + up.src_port);
-				System.out.println("目标端口: " + up.dst_port);
-				System.out.println("长度: " + up.length);
+				System.out.println("src port: " + up.src_port);
+				System.out.println("des port: " + up.dst_port);
+				System.out.println("Length: " + up.length);
 				System.out.println("");
 			}
 			if(ip instanceof TCPPacket)
 			{
-				System.out.println("运输层报文类型:TCP");
+				System.out.println("Transport layer message type:TCP");
 				TCPPacket tp = (TCPPacket) ip;
-				System.out.println("源端口: " + tp.src_port);
-				System.out.println("目的端口: " + tp.dst_port);
-				System.out.println("序号: " + tp.sequence);
-				System.out.println("确认号: " + tp.ack_num);
+				System.out.println("src port: " + tp.src_port);
+				System.out.println("des port: " + tp.dst_port);
+				System.out.println("ID: " + tp.sequence);
+				System.out.println("ACK ID: " + tp.ack_num);
 				System.out.println("URG:" + tp.urg + "/n");
 				System.out.println("ACK:" + tp.ack + "/n");
 				System.out.println("PSH:" + tp.psh + "/n");
 				System.out.println("RST:" + tp.rst + "/n");
 				System.out.println("SYN:" + tp.syn + "/n");
 				System.out.println("FIN:" + tp.fin + "/n");
-				System.out.println("窗口大小: " + tp.window);
-				System.out.println("紧急指针: " + tp.urgent_pointer);
-				System.out.println("数据:"+tp.data.toString());
+				System.out.println("Window Size: " + tp.window);
+				System.out.println("Emergency pointer: " + tp.urgent_pointer);
 				System.out.println("");
 				if (tp.src_port == 80 || tp.dst_port == 80) {
-					System.out.println("应用层报文类型: HTTP");
+					System.out.println("Application layer message type: HTTP");
+					
 					byte[] data = tp.data;
 					if (data.length == 0) {
-						System.out.println("此为不带数据的应答报文");
+						System.out.println("This is a response message without data");
 					} else {
 						StringBuffer Str = new StringBuffer();
 						if (tp.src_port == 80) {
 							String str = null;
 							try {
 								String str1 = new String(data, "UTF-8");
+								
 								if (str1.contains("HTTP/1.1")) {
 									str = str1;
+									System.out.println("UTF-8");
 								} else {
 									String str2 = new String(data, "GB2312");
+									
 									if (str2.contains("HTTP/1.1")) {
 										str = str2;
+										System.out.println("GB2312");
 									} else {
 										String str3 = new String(data, "GBK");
+										
 										if (str3.contains("HTTP/1.1")) {
 											str = str3;
+											System.out.println("GBK");
 										} else {
 											str = new String(data, "Unicode");
+											System.out.println("Unicode");
 										}
 									}
 								}
@@ -214,7 +227,13 @@ public class PacketCapture implements PacketReceiver{
 		}
 		if(packet instanceof ICMPPacket)
 		{
-			System.out.println("网络层报文类型:ICMP");
+			System.out.println("Network layer message type:ICMP");
+			ICMPPacket icmp=(ICMPPacket)packet;
+			System.out.println("Type:"+icmp.type);
+			System.out.println("Code:"+icmp.code);
+			System.out.println("Checksum:"+icmp.checksum);
+			System.out.println("Identifier:"+icmp.ident);
+			System.out.println("Seq Num:"+icmp.seq);
 		}
 	}
 }
