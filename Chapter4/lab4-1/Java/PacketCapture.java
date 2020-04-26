@@ -76,7 +76,7 @@ public class PacketCapture implements PacketReceiver{
 			 */
 			try {
 				JpcapCaptor jpcap=JpcapCaptor.openDevice(devices[Id], 65536, true, 50);
-				jpcap.loopPacket(100000, new PacketCapture());//是receivePacket的回调函数
+				jpcap.loopPacket(1000, new PacketCapture());//是receivePacket的回调函数
 			}catch (IOException e) {
 				// TODO: handle exception
 				e.printStackTrace();
@@ -173,57 +173,8 @@ public class PacketCapture implements PacketReceiver{
 				System.out.println("");
 				if (tp.src_port == 80 || tp.dst_port == 80) {
 					System.out.println("Application layer message type: HTTP");
-					
-					byte[] data = tp.data;
-					if (data.length == 0) {
-						System.out.println("This is a response message without data");
-					} else {
-						StringBuffer Str = new StringBuffer();
-						if (tp.src_port == 80) {
-							String str = null;
-							try {
-								String str1 = new String(data, "UTF-8");
-								
-								if (str1.contains("HTTP/1.1")) {
-									str = str1;
-									System.out.println("UTF-8");
-								} else {
-									String str2 = new String(data, "GB2312");
-									
-									if (str2.contains("HTTP/1.1")) {
-										str = str2;
-										System.out.println("GB2312");
-									} else {
-										String str3 = new String(data, "GBK");
-										
-										if (str3.contains("HTTP/1.1")) {
-											str = str3;
-											System.out.println("GBK");
-										} else {
-											str = new String(data, "Unicode");
-											System.out.println("Unicode");
-										}
-									}
-								}
-								Str.append(str + "\n");
-							} catch (UnsupportedEncodingException e) {
-								e.printStackTrace();
-							}
-						}
-						if (tp.dst_port == 80) {
-							try {
-								String str = new String(data, "ASCII");
-								Str.append(str);
-							} catch (Exception e) {
-
-							}
-						}
-						System.out.println(Str);
-					}
 				}
-				
 			}
-			
 		}
 		if(packet instanceof ICMPPacket)
 		{
