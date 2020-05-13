@@ -22,7 +22,7 @@ if __name__ == "__main__":
         count += 1
         if len(data_raw) == 0 :
             sock.sendto(b'eof', RECV)
-            break;
+            break
         data_frame = crc_ccitt(raw = data_raw)
         if count % FilterError == 3 :
             # Error
