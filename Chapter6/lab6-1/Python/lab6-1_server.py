@@ -6,8 +6,10 @@ server.bind(ip_port)
 
 while True:
     data,client_addr = server.recvfrom(BUFSIZE)
-    print('server收到的数据', data)
- 
-    server.sendto(data.upper(),client_addr)
+    print('recv_data_from_client', data)
+
+    data = data.upper()
+    print("send_data_to_client:",data)
+    server.sendto(data,client_addr)
  
 server.close()

@@ -10,7 +10,7 @@ while True:
     msg = input(">> ").strip()
     ip_port = (addr, port)
 
-    print("user input:",msg);
+    print("send to server:",msg);
     client.sendto(msg.encode('utf-8'),ip_port)
 
  
