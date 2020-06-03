@@ -1,0 +1,5 @@
+RoutingTable=
+135.46.56.0/22  Interface0
+136.46.60.0/22  Interface1
+192.53.40.0/23  Router1
+0/0  Router2
